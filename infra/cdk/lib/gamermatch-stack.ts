@@ -90,6 +90,7 @@ export class GamerMatchStack extends cdk.Stack {
           NODE_ENV: 'production',
           APP_URL: `https://${props.domainName || 'localhost'}`,
           NEXTAUTH_URL: `https://${props.domainName || 'localhost'}`,
+          AUTH_TRUST_HOST: 'true',
           DB_NAME: 'gamermatch',
         },
         secrets: {
