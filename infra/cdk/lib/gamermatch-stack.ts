@@ -6,6 +6,9 @@ import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53_targets from 'aws-cdk-lib/aws-route53-targets';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
@@ -14,6 +17,9 @@ import { Construct } from 'constructs';
 interface GamerMatchStackProps extends cdk.StackProps {
   stage: string;
   domainName?: string;
+  certificateArn?: string;
+  hostedZoneId?: string;
+  hostedZoneName?: string;
   githubConnectionArn?: string;
   githubOwner?: string;
   githubRepo?: string;
@@ -79,10 +85,31 @@ export class GamerMatchStack extends cdk.Stack {
 
     const dbSecret = dbInstance.secret!;
 
+    // HTTPS Certificate and DNS (optional)
+    const certificate = props.certificateArn
+      ? acm.Certificate.fromCertificateArn(this, 'Certificate', props.certificateArn)
+      : undefined;
+
+    const domainZone = props.hostedZoneId && props.hostedZoneName
+      ? route53.HostedZone.fromHostedZoneAttributes(this, 'Zone', {
+          hostedZoneId: props.hostedZoneId,
+          zoneName: props.hostedZoneName,
+        })
+      : undefined;
+
     // Fargate Service with ALB
     const fargateService = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'Service', {
       cluster,
       serviceName: `gamermatch-${stage}`,
+      ...(certificate ? {
+        certificate,
+        redirectHTTP: true,
+        protocol: cdk.aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
+      } : {}),
+      ...(domainZone && props.domainName ? {
+        domainZone,
+        domainName: props.domainName,
+      } : {}),
       taskImageOptions: {
         image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
         containerPort: 3000,
