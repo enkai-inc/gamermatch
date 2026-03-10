@@ -4,6 +4,13 @@ if [ -z "$DATABASE_URL" ] && [ -n "$DB_HOST" ]; then
   export DATABASE_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME:-gamermatch}?sslmode=require"
 fi
 
+# Write .env file for Prisma Client to read at runtime
+# (exec doesn't always pass env vars in all container runtimes)
+if [ -n "$DATABASE_URL" ]; then
+  echo "DATABASE_URL=\"${DATABASE_URL}\"" > /app/.env
+  echo "Wrote DATABASE_URL to /app/.env"
+fi
+
 # Run Prisma migrations and seed on startup (idempotent)
 if [ -n "$DATABASE_URL" ] && [ -f prisma/schema.prisma ]; then
   echo "Running database migrations..."
@@ -15,6 +22,4 @@ if [ -n "$DATABASE_URL" ] && [ -f prisma/schema.prisma ]; then
   fi
 fi
 
-echo "DATABASE_URL is set: $([ -n "$DATABASE_URL" ] && echo 'yes' || echo 'no')"
-echo "DATABASE_URL length: ${#DATABASE_URL}"
 exec "$@"
