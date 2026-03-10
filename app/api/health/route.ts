@@ -22,11 +22,5 @@ export async function GET() {
     database: dbStatus,
     ...(dbError ? { dbError } : {}),
     environment: process.env.NODE_ENV || 'unknown',
-    debug: {
-      hasDbUrl: !!process.env.DATABASE_URL,
-      dbUrlLen: process.env.DATABASE_URL?.length || 0,
-      hasDbHost: !!process.env.DB_HOST,
-      dbHost: process.env.DB_HOST?.substring(0, 20) || 'unset',
-    },
   });
 }
