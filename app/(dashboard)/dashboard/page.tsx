@@ -1,17 +1,21 @@
-import { StatsGrid } from '@/modules/dashboard/stats-cards';
+import { auth } from '@/lib/auth';
+import { DashboardOverview } from '@/components/dashboard/overview';
 
-const placeholderStats = [
-  { label: 'Games Played', value: 0 },
-  { label: 'Recommendations', value: 0 },
-  { label: 'Wishlist', value: 0 },
-  { label: 'Match Score', value: '-%' },
-];
+export default async function DashboardPage() {
+  const session = await auth();
+  const name = session?.user?.name || 'Gamer';
 
-export default function DashboardPage() {
   return (
     <div>
-      <h1 className="mb-6 text-3xl font-bold text-slate-100">Dashboard</h1>
-      <StatsGrid stats={placeholderStats} />
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-slate-100">
+          Welcome back, {name}
+        </h1>
+        <p className="mt-1 text-sm text-slate-400">
+          Here is what is happening with your gaming world.
+        </p>
+      </div>
+      <DashboardOverview />
     </div>
   );
 }

@@ -32,7 +32,11 @@ interface FeedState {
   hasMore: boolean;
 }
 
-export function RecommendationFeed() {
+interface RecommendationFeedProps {
+  mood?: string | null;
+}
+
+export function RecommendationFeed({ mood }: RecommendationFeedProps) {
   const router = useRouter();
   const [state, setState] = useState<FeedState>({
     recommendations: [],
@@ -45,7 +49,11 @@ export function RecommendationFeed() {
 
   const fetchRecommendations = useCallback(async (page: number, append = false) => {
     try {
-      const res = await fetch(`/api/recommendations?page=${page}&limit=12`);
+      const url = new URL('/api/recommendations', window.location.origin);
+      url.searchParams.set('page', String(page));
+      url.searchParams.set('limit', '12');
+      if (mood) url.searchParams.set('mood', mood);
+      const res = await fetch(url.toString());
       const json = await res.json();
 
       if (json.success) {
@@ -65,9 +73,10 @@ export function RecommendationFeed() {
     } catch {
       setState(prev => ({ ...prev, loading: false }));
     }
-  }, []);
+  }, [mood]);
 
   useEffect(() => {
+    setState(prev => ({ ...prev, loading: true, recommendations: [] }));
     fetchRecommendations(1);
   }, [fetchRecommendations]);
 
@@ -134,13 +143,19 @@ export function RecommendationFeed() {
             <path d="m21 21-4.3-4.3" />
           </svg>
         </div>
-        <h3 className="mb-2 text-lg font-semibold text-slate-200">No recommendations yet</h3>
+        <h3 className="mb-2 text-lg font-semibold text-slate-200">
+          {mood ? 'No games match this mood yet' : 'No recommendations yet'}
+        </h3>
         <p className="mb-6 max-w-sm text-sm text-slate-400">
-          Complete your taste profile to get personalized game recommendations.
+          {mood
+            ? 'Try a different mood or clear the filter to see all recommendations.'
+            : 'Complete your taste profile to get personalized game recommendations.'}
         </p>
-        <Button onClick={() => router.push('/taste-profile')}>
-          Set Up Taste Profile
-        </Button>
+        {!mood && (
+          <Button onClick={() => router.push('/taste-profile')}>
+            Set Up Taste Profile
+          </Button>
+        )}
       </div>
     );
   }
