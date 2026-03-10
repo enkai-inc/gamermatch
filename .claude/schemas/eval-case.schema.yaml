@@ -1,0 +1,84 @@
+# Eval Case Format Specification
+#
+# Defines a single test case for evaluating a skill's output quality.
+# Cases are stored in skills/{name}/evals/cases/ and discovered via eval.yaml.
+#
+# Scoring methods:
+#   - binary: simple pass/fail based on a condition string
+#   - rubric: multi-dimensional scoring with weights
+#   - llm-judge: custom judge prompt for nuanced evaluation
+#
+# Assertions are always mechanical (no LLM) and run independently of scoring.
+
+eval_case:
+  # Unique identifier within the suite (e.g., "happy-path-basic")
+  id: string  # required
+
+  # Human-readable name
+  name: string  # required
+
+  # What this case tests
+  description: string  # required
+
+  # Skill being evaluated
+  skill: string  # required
+
+  # --- Input ---
+
+  # Simulated user prompt sent to the agent
+  prompt: string  # required
+
+  # Optional fixture files loaded before execution
+  context_files:
+    - path: string          # file path to simulate
+      content_ref: string   # relative to evals/ dir
+
+  # --- Scoring (one of three methods) ---
+
+  scoring:
+    method: "binary" | "rubric" | "llm-judge"  # required
+
+    # For method: binary
+    pass_condition: string  # e.g., "output contains 'PASS'"
+
+    # For method: rubric
+    dimensions:
+      - name: string        # dimension name (e.g., "completeness")
+        weight: number       # 0.0-1.0, must sum to 1.0 across dimensions
+        pass_criteria: string  # what a passing score looks like
+        fail_criteria: string  # what a failing score looks like
+
+    # For method: llm-judge
+    judge_prompt: string     # custom system prompt for the judge
+    judge_rubric: string     # scoring rubric for the judge
+
+  # --- Hard constraints (always mechanical, no LLM) ---
+
+  assertions:
+    - type: "output_contains" | "no_output_contains" | "output_matches_regex" |
+            "tool_called" | "no_tool_called" | "file_created" | "file_not_modified"
+      value: string  # the string/regex/tool name/file path to check
+
+  # --- Metadata ---
+
+  tags: string[]                 # optional, for filtering
+  timeout_seconds: integer       # optional, overrides suite default
+  baseline_expectation: "pass" | "fail" | "partial"  # for comparator mode
+
+# Schema validation rules
+$schema:
+  required:
+    - eval_case.id
+    - eval_case.name
+    - eval_case.description
+    - eval_case.skill
+    - eval_case.prompt
+    - eval_case.scoring
+    - eval_case.scoring.method
+
+  defaults:
+    timeout_seconds: 120
+    baseline_expectation: "pass"
+    tags: []
+    assertions: []
+    context_files: []

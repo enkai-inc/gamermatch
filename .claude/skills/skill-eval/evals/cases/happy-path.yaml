@@ -1,0 +1,33 @@
+eval_case:
+  id: "happy-path-basic"
+  name: "Basic skill evaluation"
+  description: "Verify that /skill-eval can discover and run eval cases for a skill with an evals/ directory, producing a structured result."
+  skill: "skill-eval"
+
+  prompt: "/skill-eval skill-eval"
+
+  scoring:
+    method: "rubric"
+    dimensions:
+      - name: "case-discovery"
+        weight: 0.3
+        pass_criteria: "Agent discovers eval.yaml and at least one case file from the evals/cases/ directory"
+        fail_criteria: "Agent fails to find eval suite config or case files"
+      - name: "result-structure"
+        weight: 0.4
+        pass_criteria: "Output includes a results table with columns for case, status, score, and method"
+        fail_criteria: "No structured results table in output"
+      - name: "summary-stats"
+        weight: 0.3
+        pass_criteria: "Output includes pass rate, mean score, and overall status"
+        fail_criteria: "Missing aggregate statistics"
+
+  assertions:
+    - type: "output_contains"
+      value: "Pass Rate"
+    - type: "output_contains"
+      value: "Mean Score"
+
+  tags: ["self-referential", "smoke-test"]
+  timeout_seconds: 180
+  baseline_expectation: "pass"

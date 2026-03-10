@@ -1,0 +1,13 @@
+suite:
+  skill: skill-eval
+  version: "1.0.0"
+  type: "encoded-preference"
+  default_scoring_method: "rubric"
+  default_timeout_seconds: 120
+  min_pass_rate: 0.8
+  include: ["cases/*.yaml"]
+  exclude: ["wip-*.yaml"]
+  fixtures_dir: "fixtures/"
+  benchmark:
+    enabled: true
+    data_file: ".claude/artifacts/benchmarks/skill-eval.jsonl"
