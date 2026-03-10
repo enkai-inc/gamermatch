@@ -46,41 +46,52 @@ export class GamerMatchStack extends cdk.Stack {
       },
     });
 
-    // RDS PostgreSQL
-    const dbCluster = new rds.DatabaseCluster(this, 'Database', {
-      engine: rds.DatabaseClusterEngine.auroraPostgres({
-        version: rds.AuroraPostgresEngineVersion.VER_15_4,
+    // RDS PostgreSQL (single instance for dev, cost-effective)
+    const dbInstance = new rds.DatabaseInstance(this, 'Database', {
+      engine: rds.DatabaseInstanceEngine.postgres({
+        version: rds.PostgresEngineVersion.VER_16,
       }),
-      serverlessV2MinCapacity: 0.5,
-      serverlessV2MaxCapacity: 2,
-      writer: rds.ClusterInstance.serverlessV2('writer'),
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
       vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
-      defaultDatabaseName: 'gamermatch',
+      databaseName: 'gamermatch',
+      allocatedStorage: 20,
+      maxAllocatedStorage: 50,
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT,
+      credentials: rds.Credentials.fromGeneratedSecret('gamermatch', {
+        secretName: `gamermatch/${stage}/db`,
+      }),
     });
 
     // ECS Cluster
     const cluster = new ecs.Cluster(this, 'Cluster', {
       vpc,
       clusterName: `gamermatch-${stage}`,
-      containerInsights: true,
     });
+
+    // Build DATABASE_URL from RDS secret components
+    // The ECS task will construct the URL from individual secret fields
+    const dbSecret = dbInstance.secret!;
 
     // Fargate Service with ALB
     const fargateService = new ecs_patterns.ApplicationLoadBalancedFargateService(this, 'Service', {
       cluster,
       serviceName: `gamermatch-${stage}`,
       taskImageOptions: {
-        image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
-        containerPort: 3000,
+        // Use public image as placeholder until first CodeBuild push replaces with app image
+        image: ecs.ContainerImage.fromRegistry('public.ecr.aws/nginx/nginx:latest'),
+        containerPort: 80,
         environment: {
           NODE_ENV: 'production',
           APP_URL: `https://${props.domainName || 'localhost'}`,
           NEXTAUTH_URL: `https://${props.domainName || 'localhost'}`,
+          DB_NAME: 'gamermatch',
         },
         secrets: {
-          DATABASE_URL: ecs.Secret.fromSecretsManager(dbCluster.secret!, 'host'),
+          DB_HOST: ecs.Secret.fromSecretsManager(dbSecret, 'host'),
+          DB_PORT: ecs.Secret.fromSecretsManager(dbSecret, 'port'),
+          DB_USERNAME: ecs.Secret.fromSecretsManager(dbSecret, 'username'),
+          DB_PASSWORD: ecs.Secret.fromSecretsManager(dbSecret, 'password'),
           AUTH_SECRET: ecs.Secret.fromSecretsManager(appSecrets, 'AUTH_SECRET'),
           IGDB_CLIENT_ID: ecs.Secret.fromSecretsManager(appSecrets, 'IGDB_CLIENT_ID'),
           IGDB_CLIENT_SECRET: ecs.Secret.fromSecretsManager(appSecrets, 'IGDB_CLIENT_SECRET'),
@@ -103,7 +114,7 @@ export class GamerMatchStack extends cdk.Stack {
 
     // Health check
     fargateService.targetGroup.configureHealthCheck({
-      path: '/api/health',
+      path: '/',
       healthyHttpCodes: '200',
       interval: cdk.Duration.seconds(30),
     });
@@ -118,7 +129,7 @@ export class GamerMatchStack extends cdk.Stack {
     });
 
     // Allow ECS to connect to RDS
-    dbCluster.connections.allowDefaultPortFrom(fargateService.service, 'ECS to RDS');
+    dbInstance.connections.allowDefaultPortFrom(fargateService.service, 'ECS to RDS');
 
     // Outputs
     new cdk.CfnOutput(this, 'ServiceUrl', {
@@ -129,6 +140,9 @@ export class GamerMatchStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, 'ClusterName', {
       value: cluster.clusterName,
+    });
+    new cdk.CfnOutput(this, 'DatabaseEndpoint', {
+      value: dbInstance.instanceEndpoint.hostname,
     });
   }
 }
