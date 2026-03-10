@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gaming-50: #f0fdf4;
+  --color-gaming-100: #dcfce7;
+  --color-gaming-200: #bbf7d0;
+  --color-gaming-300: #86efac;
+  --color-gaming-400: #4ade80;
+  --color-gaming-500: #22c55e;
+  --color-gaming-600: #16a34a;
+  --color-gaming-700: #15803d;
+  --color-gaming-800: #166534;
+  --color-gaming-900: #14532d;
+  --color-gaming-950: #052e16;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+}
