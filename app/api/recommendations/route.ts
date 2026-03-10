@@ -4,6 +4,8 @@ import { requireAuth, parseSearchParams } from '@/lib/api-utils';
 import { paginated, serverError } from '@/lib/api-response';
 import { generateRecommendations } from '@/lib/recommendation-engine';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const authResult = await requireAuth();

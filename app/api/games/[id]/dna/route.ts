@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { extractGameDna } from '@/lib/game-dna';
 import { success, notFound, serverError } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

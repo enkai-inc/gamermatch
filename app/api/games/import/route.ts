@@ -3,6 +3,8 @@ import { requireAuth } from '@/lib/api-utils';
 import { importTopGames } from '@/lib/game-import';
 import { success, serverError } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const authResult = await requireAuth();

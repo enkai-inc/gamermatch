@@ -4,6 +4,8 @@ import { requireAuth, parseBody } from '@/lib/api-utils';
 import { success, error, serverError } from '@/lib/api-response';
 import { tasteProfileSchema } from '@/lib/validations/taste-profile';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const authResult = await requireAuth();

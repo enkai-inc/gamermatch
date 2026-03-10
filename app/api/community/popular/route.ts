@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import { success, serverError } from '@/lib/api-response';
 import { getClusterPopularGames, getAllClusters } from '@/lib/taste-clusters';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

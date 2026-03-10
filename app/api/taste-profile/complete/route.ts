@@ -2,6 +2,8 @@ import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/api-utils';
 import { success, notFound, serverError } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   try {
     const authResult = await requireAuth();

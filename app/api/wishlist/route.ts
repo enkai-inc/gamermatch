@@ -4,6 +4,8 @@ import { requireAuth, parseBody, parseSearchParams } from '@/lib/api-utils';
 import { success, paginated, conflict, serverError } from '@/lib/api-response';
 import { wishlistItemSchema } from '@/lib/validations/wishlist';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const authResult = await requireAuth();

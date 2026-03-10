@@ -3,6 +3,8 @@ import { requireAuth } from '@/lib/api-utils';
 import { success, notFound, serverError } from '@/lib/api-response';
 import { assignCluster, getClusterInfo, getClusterPopularGames } from '@/lib/taste-clusters';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const authResult = await requireAuth();

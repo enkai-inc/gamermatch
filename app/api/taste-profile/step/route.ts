@@ -18,6 +18,8 @@ const stepDataSchemas: Record<number, z.ZodSchema> = {
   5: z.object({ platformPrefs: z.array(z.string()).min(1, 'Select at least one platform') }),
 };
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(req: NextRequest) {
   try {
     const authResult = await requireAuth();

@@ -2,6 +2,8 @@ import { auth } from '@/lib/auth';
 import { extractAllGameDna } from '@/lib/game-dna';
 import { success, unauthorized, serverError } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   try {
     const session = await auth();
