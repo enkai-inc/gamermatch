@@ -1,0 +1,21 @@
+{
+  "name": "gamermatch-infra",
+  "version": "0.1.0",
+  "bin": { "cdk": "bin/app.ts" },
+  "scripts": {
+    "build": "tsc",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --all",
+    "diff": "cdk diff"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.170.0",
+    "constructs": "^10.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0",
+    "aws-cdk": "^2.170.0"
+  }
+}
