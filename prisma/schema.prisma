@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tasteProfile    TasteProfile?
+  journalEntries  PlayJournalEntry[]
+  wishlistItems   WishlistItem[]
+  recommendations Recommendation[]
+  accounts        Account[]
+  sessions        Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Game {
+  id              String    @id @default(cuid())
+  igdbId          Int?      @unique
+  steamAppId      Int?      @unique
+  title           String
+  slug            String    @unique
+  description     String?
+  summary         String?
+  coverUrl        String?
+  screenshotUrls  Json?
+  releaseDate     DateTime?
+  developer       String?
+  publisher       String?
+  metacriticScore Int?
+  igdbRating      Float?
+
+  genres    GameGenre[]
+  platforms GamePlatform[]
+  mechanics GameMechanic[]
+  themes    GameTheme[]
+
+  gameDna         GameDna?
+  affiliateLinks  AffiliateLink[]
+  journalEntries  PlayJournalEntry[]
+  wishlistItems   WishlistItem[]
+  recommendations Recommendation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([title])
+  @@index([slug])
+}
+
+model Genre {
+  id    String      @id @default(cuid())
+  name  String      @unique
+  slug  String      @unique
+  games GameGenre[]
+}
+
+model GameGenre {
+  gameId  String
+  genreId String
+  game    Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, genreId])
+}
+
+model Platform {
+  id    String         @id @default(cuid())
+  name  String         @unique
+  slug  String         @unique
+  games GamePlatform[]
+}
+
+model GamePlatform {
+  gameId     String
+  platformId String
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  platform   Platform @relation(fields: [platformId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, platformId])
+}
+
+model Mechanic {
+  id    String         @id @default(cuid())
+  name  String         @unique
+  slug  String         @unique
+  games GameMechanic[]
+}
+
+model GameMechanic {
+  gameId     String
+  mechanicId String
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  mechanic   Mechanic @relation(fields: [mechanicId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, mechanicId])
+}
+
+model Theme {
+  id    String      @id @default(cuid())
+  name  String      @unique
+  slug  String      @unique
+  games GameTheme[]
+}
+
+model GameTheme {
+  gameId  String
+  themeId String
+  game    Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  theme   Theme  @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, themeId])
+}
+
+model TasteProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  favoriteGenres     Json?
+  preferredMechanics Json?
+  artStylePrefs      Json?
+  difficultyPref     DifficultyLevel?
+  sessionLength      SessionLength?
+  platformPrefs      Json?
+  moodPreferences    Json?
+  seedGameTitles     Json?
+
+  currentStep Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model GameDna {
+  id     String @id @default(cuid())
+  gameId String @unique
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  mechanicsVector Json
+  themesVector    Json
+  pacingScore     Float
+  complexityScore Float
+  socialScore     Float
+  aestheticTags   Json
+  emotionalTone   Json?
+  moodTags        Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Recommendation {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  score  Float
+  reason String
+  source RecommendationSource
+  mood   MoodType?
+
+  dismissed Boolean @default(false)
+  clicked   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameId])
+  @@index([userId, score])
+  @@index([userId, dismissed])
+}
+
+model PlayJournalEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  rating      Int?
+  status      PlayStatus @default(BACKLOG)
+  hoursPlayed Float?
+  notes       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, gameId])
+  @@index([userId, status])
+}
+
+model WishlistItem {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  targetPrice  Float?
+  notifyOnSale Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameId])
+  @@index([userId])
+}
+
+model AffiliateLink {
+  id     String @id @default(cuid())
+  gameId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  storefront   Storefront
+  url          String
+  currentPrice Float?
+  currency     String     @default("USD")
+  onSale       Boolean    @default(false)
+  salePrice    Float?
+  lastChecked  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, storefront])
+  @@index([storefront])
+}
+
+model AffiliateClick {
+  id              String     @id @default(cuid())
+  affiliateLinkId String
+  userId          String?
+  storefront      Storefront
+  gameId          String
+
+  createdAt DateTime @default(now())
+
+  @@index([storefront, createdAt])
+  @@index([gameId])
+}
+
+enum DifficultyLevel {
+  CASUAL
+  MODERATE
+  CHALLENGING
+  HARDCORE
+}
+
+enum SessionLength {
+  QUICK
+  MEDIUM
+  LONG
+  MARATHON
+}
+
+enum MoodType {
+  RELAXING
+  COMPETITIVE
+  SOCIAL
+  ADVENTURE
+  CREATIVE
+  QUICK_FUN
+}
+
+enum PlayStatus {
+  BACKLOG
+  PLAYING
+  COMPLETED
+  DROPPED
+  ON_HOLD
+}
+
+enum Storefront {
+  STEAM
+  HUMBLE_BUNDLE
+  GREEN_MAN_GAMING
+  CDKEYS
+  BIG_FISH
+  GAMESTOP
+  GOG
+  EPIC_GAMES
+  PLAYSTATION
+  XBOX
+  NINTENDO
+}
+
+enum RecommendationSource {
+  AI_ENGINE
+  GAME_DNA
+  MOOD
+  COMMUNITY
+  TRENDING
+}
