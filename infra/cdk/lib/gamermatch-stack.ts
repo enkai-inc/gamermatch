@@ -84,8 +84,10 @@ export class GamerMatchStack extends cdk.Stack {
       cluster,
       serviceName: `gamermatch-${stage}`,
       taskImageOptions: {
-        image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
-        containerPort: 3000,
+        // Nginx placeholder until first pipeline run pushes app image
+        // Pipeline Deploy stage will update the task definition with the real ECR image
+        image: ecs.ContainerImage.fromRegistry('public.ecr.aws/nginx/nginx:latest'),
+        containerPort: 80,
         environment: {
           NODE_ENV: 'production',
           APP_URL: `https://${props.domainName || 'localhost'}`,
@@ -119,7 +121,7 @@ export class GamerMatchStack extends cdk.Stack {
 
     // Health check
     fargateService.targetGroup.configureHealthCheck({
-      path: '/api/health',
+      path: '/',
       healthyHttpCodes: '200',
       interval: cdk.Duration.seconds(30),
       healthyThresholdCount: 2,
@@ -156,7 +158,7 @@ export class GamerMatchStack extends cdk.Stack {
         AWS_DEFAULT_REGION: { value: this.region },
         ECR_REPO_NAME: { value: `gamermatch-${stage}` },
         ECR_REPO_URI: { value: repository.repositoryUri },
-        CONTAINER_NAME: { value: `gamermatch-${stage}` },
+        CONTAINER_NAME: { value: 'web' }, // Must match ECS container name from ALB pattern
       },
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
