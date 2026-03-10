@@ -28,6 +28,7 @@ COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chown -R nextjs:nodejs /app/node_modules/@prisma /app/node_modules/.prisma /app/node_modules/prisma /app/prisma
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
