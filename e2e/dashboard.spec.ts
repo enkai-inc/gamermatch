@@ -53,13 +53,13 @@ test.describe('Dashboard', () => {
     test('navigates to Wishlist page', async ({ page }) => {
       await navigateTo(page, 'Wishlist');
       await expect(page).toHaveURL(/\/dashboard\/wishlist/);
-      await expect(page.getByText('Wishlist')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Wishlist', exact: true })).toBeVisible();
     });
 
     test('navigates to Community page', async ({ page }) => {
       await navigateTo(page, 'Community');
       await expect(page).toHaveURL(/\/dashboard\/community/);
-      await expect(page.getByText('Community')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Community' })).toBeVisible();
     });
 
     test('navigates to Profile page', async ({ page }) => {

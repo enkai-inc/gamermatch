@@ -21,7 +21,7 @@ test.describe('Play Journal Page', () => {
   test('opens add journal entry dialog', async ({ page }) => {
     await page.getByRole('button', { name: 'Add Game' }).click();
     // The dialog should appear with a search input
-    await expect(page.getByPlaceholder('Search for a game...')).toBeVisible();
+    await expect(page.getByPlaceholder('Type to search games...')).toBeVisible();
   });
 
   test('journal stats section renders', async ({ page }) => {

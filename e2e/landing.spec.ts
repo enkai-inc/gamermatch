@@ -17,7 +17,7 @@ test.describe('Landing Page', () => {
 
   test('shows how it works section', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('How It Works')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'How It Works' })).toBeVisible();
     await expect(page.getByText('Build Your Taste Profile')).toBeVisible();
     await expect(page.getByText('Get AI Recommendations')).toBeVisible();
     await expect(page.getByText('Play & Refine')).toBeVisible();
@@ -42,7 +42,7 @@ test.describe('Landing Page', () => {
   test('footer contains branding and links', async ({ page }) => {
     await page.goto('/');
     const footer = page.locator('footer');
-    await expect(footer.getByText('GameMatch AI')).toBeVisible();
+    await expect(footer.getByText('GameMatch AI', { exact: true }).first()).toBeVisible();
     await expect(footer.getByRole('link', { name: 'About' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'Privacy' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'Terms' })).toBeVisible();

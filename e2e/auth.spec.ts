@@ -52,7 +52,7 @@ test.describe('Authentication', () => {
   test.describe('Registration', () => {
     test('shows registration form', async ({ page }) => {
       await page.goto('/register');
-      await expect(page.getByText('Create Account')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Create Account' })).toBeVisible();
       await expect(page.locator('#name')).toBeVisible();
       await expect(page.locator('#email')).toBeVisible();
       await expect(page.locator('#password')).toBeVisible();
