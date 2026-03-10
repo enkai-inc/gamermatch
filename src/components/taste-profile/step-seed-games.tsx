@@ -76,6 +76,12 @@ export function StepSeedGames({ selected, onChange }: StepSeedGamesProps) {
           placeholder="Search for a game..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && query.trim().length >= 2) {
+              e.preventDefault();
+              addGame(query.trim());
+            }
+          }}
           onFocus={() => results.length > 0 && setShowDropdown(true)}
           onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
           disabled={selected.length >= 5}
