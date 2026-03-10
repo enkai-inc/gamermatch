@@ -2,6 +2,8 @@ import { requireAuth } from '@/lib/api-utils';
 import { success, serverError } from '@/lib/api-response';
 import { generateRecommendations } from '@/lib/recommendation-engine';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   try {
     const authResult = await requireAuth();

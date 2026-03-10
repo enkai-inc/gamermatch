@@ -12,6 +12,8 @@ const clickSchema = z.object({
   storefront: z.nativeEnum(Storefront),
 });
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const parsed = await parseBody(req, clickSchema);

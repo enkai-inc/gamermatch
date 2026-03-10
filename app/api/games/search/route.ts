@@ -4,6 +4,8 @@ import { searchGames } from '@/lib/igdb';
 import { importGame } from '@/lib/game-import';
 import { success, error, serverError } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

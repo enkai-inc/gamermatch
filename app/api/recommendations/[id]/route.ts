@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/api-utils';
 import { success, notFound, forbidden, serverError } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
