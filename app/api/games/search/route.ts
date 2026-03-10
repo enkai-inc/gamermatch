@@ -51,39 +51,43 @@ export async function GET(req: NextRequest) {
     }
 
     // Fall back to IGDB search and import on-the-fly
-    const remaining = limit - localGames.length;
-    const localIgdbIds = new Set(
-      (await db.game.findMany({
-        where: { title: { contains: query, mode: 'insensitive' } },
-        select: { igdbId: true },
-      })).map(g => g.igdbId).filter(Boolean)
-    );
+    let imported: typeof localGames = [];
+    try {
+      const remaining = limit - localGames.length;
+      const localIgdbIds = new Set(
+        (await db.game.findMany({
+          where: { title: { contains: query, mode: 'insensitive' } },
+          select: { igdbId: true },
+        })).map(g => g.igdbId).filter(Boolean)
+      );
 
-    const igdbGames = await searchGames(query, remaining + 5); // fetch extra to account for dupes
-    const imported = [];
+      const igdbGames = await searchGames(query, remaining + 5);
 
-    for (const igdbGame of igdbGames) {
-      if (localIgdbIds.has(igdbGame.id)) continue;
-      if (imported.length >= remaining) break;
+      for (const igdbGame of igdbGames) {
+        if (localIgdbIds.has(igdbGame.id)) continue;
+        if (imported.length >= remaining) break;
 
-      try {
-        const game = await importGame(igdbGame);
-        const full = await db.game.findUnique({
-          where: { id: game.id },
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            coverUrl: true,
-            releaseDate: true,
-            genres: { include: { genre: true } },
-            platforms: { include: { platform: true } },
-          },
-        });
-        if (full) imported.push(full);
-      } catch {
-        // Skip failed imports silently
+        try {
+          const game = await importGame(igdbGame);
+          const full = await db.game.findUnique({
+            where: { id: game.id },
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              coverUrl: true,
+              releaseDate: true,
+              genres: { include: { genre: true } },
+              platforms: { include: { platform: true } },
+            },
+          });
+          if (full) imported.push(full);
+        } catch {
+          // Skip failed imports silently
+        }
       }
+    } catch {
+      // IGDB unavailable — return local results only
     }
 
     const allGames = [...localGames, ...imported].slice(0, limit);
