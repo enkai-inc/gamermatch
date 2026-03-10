@@ -184,7 +184,7 @@ export class GamerMatchStack extends cdk.Stack {
               'docker push $ECR_REPO_URI:$IMAGE_TAG',
               'docker push $ECR_REPO_URI:latest',
               'echo Writing image definitions for ECS deploy...',
-              `printf '[{"name":"$CONTAINER_NAME","imageUri":"%s"}]' $ECR_REPO_URI:$IMAGE_TAG > imagedefinitions.json`,
+              'printf \'[{"name":"%s","imageUri":"%s"}]\' $CONTAINER_NAME $ECR_REPO_URI:$IMAGE_TAG > imagedefinitions.json',
               'cat imagedefinitions.json',
             ],
           },
