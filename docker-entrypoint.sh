@@ -16,9 +16,15 @@ if [ -n "$DATABASE_URL" ] && [ -f prisma/schema.prisma ]; then
   echo "Running database migrations..."
   node node_modules/prisma/build/index.js migrate deploy 2>&1 || echo "Migration warning"
 
+  SEED_FILE=""
   if [ -f prisma/compiled/prisma/seed.js ]; then
-    echo "Running database seed..."
-    node prisma/compiled/prisma/seed.js 2>&1 || echo "Seed skipped (may already exist)"
+    SEED_FILE="prisma/compiled/prisma/seed.js"
+  elif [ -f prisma/compiled/seed.js ]; then
+    SEED_FILE="prisma/compiled/seed.js"
+  fi
+  if [ -n "$SEED_FILE" ]; then
+    echo "Running database seed from $SEED_FILE..."
+    node "$SEED_FILE" 2>&1 || echo "Seed skipped (may already exist)"
   fi
 fi
 
