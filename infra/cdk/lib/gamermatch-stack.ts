@@ -84,10 +84,8 @@ export class GamerMatchStack extends cdk.Stack {
       cluster,
       serviceName: `gamermatch-${stage}`,
       taskImageOptions: {
-        // Nginx placeholder until first pipeline run pushes app image
-        // Pipeline Deploy stage will update the task definition with the real ECR image
-        image: ecs.ContainerImage.fromRegistry('public.ecr.aws/nginx/nginx:latest'),
-        containerPort: 80,
+        image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
+        containerPort: 3000,
         environment: {
           NODE_ENV: 'production',
           APP_URL: `https://${props.domainName || 'localhost'}`,
@@ -121,7 +119,7 @@ export class GamerMatchStack extends cdk.Stack {
 
     // Health check
     fargateService.targetGroup.configureHealthCheck({
-      path: '/',
+      path: '/api/health',
       healthyHttpCodes: '200',
       interval: cdk.Duration.seconds(30),
       healthyThresholdCount: 2,
