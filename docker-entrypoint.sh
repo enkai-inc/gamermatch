@@ -15,4 +15,6 @@ if [ -n "$DATABASE_URL" ] && [ -f prisma/schema.prisma ]; then
   fi
 fi
 
+echo "DATABASE_URL is set: $([ -n "$DATABASE_URL" ] && echo 'yes' || echo 'no')"
+echo "DATABASE_URL length: ${#DATABASE_URL}"
 exec "$@"
