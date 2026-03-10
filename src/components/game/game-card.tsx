@@ -27,7 +27,7 @@ export function GameCard({
 }: GameCardProps) {
   return (
     <Link
-      href={`/games/${id}`}
+      href={`/dashboard/games/${id}`}
       className={cn(
         'group relative flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900 transition-all duration-200 hover:scale-[1.02] hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5',
         className

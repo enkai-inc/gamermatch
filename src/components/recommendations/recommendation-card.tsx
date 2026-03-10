@@ -118,6 +118,17 @@ export function RecommendationCard({ recommendation, onDismiss, onView }: Recomm
           <Button size="sm" className="flex-1 text-xs" onClick={handleClick}>
             View Details
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.location.href = `/dashboard/games/${game.id}`;
+            }}
+          >
+            Buy
+          </Button>
         </div>
       </CardContent>
     </Card>
