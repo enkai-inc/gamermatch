@@ -138,6 +138,10 @@ export class GamerMatchStack extends cdk.Stack {
       targetUtilizationPercent: 70,
     });
 
+    // Grant ECS task execution role permission to pull from ECR
+    // (needed because placeholder image is public nginx, but pipeline swaps to private ECR)
+    repository.grantPull(fargateService.taskDefinition.executionRole!);
+
     // Allow ECS to connect to RDS
     dbInstance.connections.allowDefaultPortFrom(fargateService.service, 'ECS to RDS');
 
