@@ -6,11 +6,17 @@ import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as codebuild from 'aws-cdk-lib/aws-codebuild';
+import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
+import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Construct } from 'constructs';
 
 interface GamerMatchStackProps extends cdk.StackProps {
   stage: string;
   domainName?: string;
+  githubConnectionArn?: string;
+  githubOwner?: string;
+  githubRepo?: string;
 }
 
 export class GamerMatchStack extends cdk.Stack {
@@ -18,6 +24,8 @@ export class GamerMatchStack extends cdk.Stack {
     super(scope, id, props);
 
     const { stage } = props;
+    const githubOwner = props.githubOwner || 'enkai-inc';
+    const githubRepo = props.githubRepo || 'gamermatch';
 
     // VPC
     const vpc = new ec2.Vpc(this, 'Vpc', {
@@ -69,8 +77,6 @@ export class GamerMatchStack extends cdk.Stack {
       clusterName: `gamermatch-${stage}`,
     });
 
-    // Build DATABASE_URL from RDS secret components
-    // The ECS task will construct the URL from individual secret fields
     const dbSecret = dbInstance.secret!;
 
     // Fargate Service with ALB
@@ -78,7 +84,8 @@ export class GamerMatchStack extends cdk.Stack {
       cluster,
       serviceName: `gamermatch-${stage}`,
       taskImageOptions: {
-        // Use public image as placeholder until first CodeBuild push replaces with app image
+        // Nginx placeholder until first pipeline run pushes app image
+        // Pipeline Deploy stage will update the task definition with the real ECR image
         image: ecs.ContainerImage.fromRegistry('public.ecr.aws/nginx/nginx:latest'),
         containerPort: 80,
         environment: {
@@ -117,6 +124,9 @@ export class GamerMatchStack extends cdk.Stack {
       path: '/',
       healthyHttpCodes: '200',
       interval: cdk.Duration.seconds(30),
+      healthyThresholdCount: 2,
+      unhealthyThresholdCount: 5,
+      timeout: cdk.Duration.seconds(10),
     });
 
     // Auto-scaling
@@ -131,6 +141,118 @@ export class GamerMatchStack extends cdk.Stack {
     // Allow ECS to connect to RDS
     dbInstance.connections.allowDefaultPortFrom(fargateService.service, 'ECS to RDS');
 
+    // ========================================
+    // CodePipeline — auto-deploy on push to main
+    // ========================================
+
+    // CodeBuild project — builds Docker image and pushes to ECR
+    const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
+      projectName: `gamermatch-${stage}-build`,
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+        privileged: true, // Required for Docker builds
+        computeType: codebuild.ComputeType.SMALL,
+      },
+      environmentVariables: {
+        AWS_ACCOUNT_ID: { value: this.account },
+        AWS_DEFAULT_REGION: { value: this.region },
+        ECR_REPO_NAME: { value: `gamermatch-${stage}` },
+        ECR_REPO_URI: { value: repository.repositoryUri },
+        CONTAINER_NAME: { value: 'web' }, // Must match ECS container name from ALB pattern
+      },
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          pre_build: {
+            commands: [
+              'echo Logging into ECR...',
+              'aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com',
+              'COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)',
+              'IMAGE_TAG=${COMMIT_HASH:-latest}',
+            ],
+          },
+          build: {
+            commands: [
+              'echo Building Docker image...',
+              'docker build -t $ECR_REPO_URI:$IMAGE_TAG .',
+              'docker tag $ECR_REPO_URI:$IMAGE_TAG $ECR_REPO_URI:latest',
+            ],
+          },
+          post_build: {
+            commands: [
+              'echo Pushing Docker image...',
+              'docker push $ECR_REPO_URI:$IMAGE_TAG',
+              'docker push $ECR_REPO_URI:latest',
+              'echo Writing image definitions for ECS deploy...',
+              `printf '[{"name":"$CONTAINER_NAME","imageUri":"%s"}]' $ECR_REPO_URI:$IMAGE_TAG > imagedefinitions.json`,
+              'cat imagedefinitions.json',
+            ],
+          },
+        },
+        artifacts: {
+          files: ['imagedefinitions.json'],
+        },
+      }),
+      timeout: cdk.Duration.minutes(30),
+    });
+
+    // Grant CodeBuild permissions to push to ECR
+    repository.grantPullPush(buildProject);
+
+    // Pipeline artifacts
+    const sourceOutput = new codepipeline.Artifact('SourceOutput');
+    const buildOutput = new codepipeline.Artifact('BuildOutput');
+
+    // CodePipeline
+    const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
+      pipelineName: `gamermatch-${stage}`,
+      restartExecutionOnUpdate: true,
+    });
+
+    // Source stage — GitHub via CodeStar Connection
+    const connectionArn = props.githubConnectionArn
+      || 'arn:aws:codeconnections:us-east-1:882384879235:connection/97a5d8e8-b3b6-4e5f-ba32-ab31909a10c9';
+
+    pipeline.addStage({
+      stageName: 'Source',
+      actions: [
+        new codepipeline_actions.CodeStarConnectionsSourceAction({
+          actionName: 'GitHub',
+          owner: githubOwner,
+          repo: githubRepo,
+          branch: 'main',
+          connectionArn,
+          output: sourceOutput,
+          triggerOnPush: true,
+        }),
+      ],
+    });
+
+    // Build stage — Docker build + ECR push
+    pipeline.addStage({
+      stageName: 'Build',
+      actions: [
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'DockerBuild',
+          project: buildProject,
+          input: sourceOutput,
+          outputs: [buildOutput],
+        }),
+      ],
+    });
+
+    // Deploy stage — ECS rolling update
+    pipeline.addStage({
+      stageName: 'Deploy',
+      actions: [
+        new codepipeline_actions.EcsDeployAction({
+          actionName: 'DeployToECS',
+          service: fargateService.service,
+          input: buildOutput,
+        }),
+      ],
+    });
+
     // Outputs
     new cdk.CfnOutput(this, 'ServiceUrl', {
       value: `http://${fargateService.loadBalancer.loadBalancerDnsName}`,
@@ -143,6 +265,9 @@ export class GamerMatchStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, 'DatabaseEndpoint', {
       value: dbInstance.instanceEndpoint.hostname,
+    });
+    new cdk.CfnOutput(this, 'PipelineName', {
+      value: pipeline.pipelineName,
     });
   }
 }
