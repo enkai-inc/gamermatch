@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+require("source-map-support/register");
+const cdk = require("aws-cdk-lib");
+const gamermatch_stack_1 = require("../lib/gamermatch-stack");
+const app = new cdk.App();
+const env = {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+};
+new gamermatch_stack_1.GamerMatchStack(app, 'GamerMatchStack-dev', {
+    env,
+    stage: 'dev',
+    domainName: 'gamermatch.digitaldevops.io',
+});
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYXBwLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vYmluL2FwcC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7QUFDQSx1Q0FBcUM7QUFDckMsbUNBQW1DO0FBQ25DLDhEQUEwRDtBQUUxRCxNQUFNLEdBQUcsR0FBRyxJQUFJLEdBQUcsQ0FBQyxHQUFHLEVBQUUsQ0FBQztBQUUxQixNQUFNLEdBQUcsR0FBRztJQUNWLE9BQU8sRUFBRSxPQUFPLENBQUMsR0FBRyxDQUFDLG1CQUFtQjtJQUN4QyxNQUFNLEVBQUUsT0FBTyxDQUFDLEdBQUcsQ0FBQyxrQkFBa0IsSUFBSSxXQUFXO0NBQ3RELENBQUM7QUFFRixJQUFJLGtDQUFlLENBQUMsR0FBRyxFQUFFLHFCQUFxQixFQUFFO0lBQzlDLEdBQUc7SUFDSCxLQUFLLEVBQUUsS0FBSztJQUNaLFVBQVUsRUFBRSw2QkFBNkI7Q0FDMUMsQ0FBQyxDQUFDIiwic291cmNlc0NvbnRlbnQiOlsiIyEvdXNyL2Jpbi9lbnYgbm9kZVxuaW1wb3J0ICdzb3VyY2UtbWFwLXN1cHBvcnQvcmVnaXN0ZXInO1xuaW1wb3J0ICogYXMgY2RrIGZyb20gJ2F3cy1jZGstbGliJztcbmltcG9ydCB7IEdhbWVyTWF0Y2hTdGFjayB9IGZyb20gJy4uL2xpYi9nYW1lcm1hdGNoLXN0YWNrJztcblxuY29uc3QgYXBwID0gbmV3IGNkay5BcHAoKTtcblxuY29uc3QgZW52ID0ge1xuICBhY2NvdW50OiBwcm9jZXNzLmVudi5DREtfREVGQVVMVF9BQ0NPVU5ULFxuICByZWdpb246IHByb2Nlc3MuZW52LkNES19ERUZBVUxUX1JFR0lPTiB8fCAndXMtZWFzdC0xJyxcbn07XG5cbm5ldyBHYW1lck1hdGNoU3RhY2soYXBwLCAnR2FtZXJNYXRjaFN0YWNrLWRldicsIHtcbiAgZW52LFxuICBzdGFnZTogJ2RldicsXG4gIGRvbWFpbk5hbWU6ICdnYW1lcm1hdGNoLmRpZ2l0YWxkZXZvcHMuaW8nLFxufSk7XG4iXX0=

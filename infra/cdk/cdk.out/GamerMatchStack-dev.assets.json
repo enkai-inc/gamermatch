@@ -1,0 +1,21 @@
+{
+  "version": "52.0.0",
+  "files": {
+    "62fd6c7f65decb8d9e16345d90a7f2c786096c9dcea1f2b5c019c7a802e25e82": {
+      "displayName": "GamerMatchStack-dev Template",
+      "source": {
+        "path": "GamerMatchStack-dev.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "882384879235-us-east-1-f195e90b": {
+          "bucketName": "cdk-hnb659fds-assets-882384879235-us-east-1",
+          "objectKey": "62fd6c7f65decb8d9e16345d90a7f2c786096c9dcea1f2b5c019c7a802e25e82.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::882384879235:role/cdk-hnb659fds-file-publishing-role-882384879235-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
