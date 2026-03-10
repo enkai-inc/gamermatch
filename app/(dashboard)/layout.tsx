@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
 import { SignOutButton } from '@/modules/auth/sign-out-button';
+import { TasteProfileBanner } from '@/components/taste-profile/banner';
 
 const navItems = [
   { href: '/dashboard', label: 'Overview' },
@@ -16,6 +18,15 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+
+  let showProfileBanner = false;
+  if (session?.user?.id) {
+    const profile = await db.tasteProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { completedAt: true },
+    });
+    showProfileBanner = !profile?.completedAt;
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-950">
@@ -46,6 +57,7 @@ export default async function DashboardLayout({
             <SignOutButton />
           </div>
         </header>
+        {showProfileBanner && <TasteProfileBanner />}
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
